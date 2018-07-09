@@ -18,9 +18,10 @@ class Task():
         self.sim = PhysicsSim(init_pose, init_velocities, init_angle_velocities, runtime) 
         self.action_repeat = 3
 
-        self.state_size = self.action_repeat * 2
-        self.action_low = 320
-        self.action_high = 410
+        self.state_size = self.action_repeat * 3
+        self.action_low = 360
+        self.action_high = 450
+        self.action_range = self.action_high - self.action_low 
         self.action_size = 1
 
         # Goal
@@ -30,10 +31,14 @@ class Task():
         """Uses current pose of sim to return reward."""
         # Get max reward of 1 if within 1 unit from hover spot
         # Get min reward of -1 if 6+ units from hover spot
-        max_dist = 5
+        max_dist_sq = 16
+        dist_sq = np.linalg.norm(self.sim.pose[:3] - self.target_pos)**2
+        reward = -(min(max(0,dist_sq),max_dist_sq)/(max_dist_sq/2) - 1) * .98
 
-        dist = np.linalg.norm(self.sim.pose[:3] - self.target_pos)**2-.05
-        reward = -(min(max(0,dist),max_dist)/(max_dist/2) - 1)
+        #print("target pos " + str(self.target_pos))
+        #print("sim.pose " + str(self.sim.pose[:3]))
+        #print("dist " + str(dist))
+        #print("reward " + str(reward))
 
         return reward / self.action_repeat
     
@@ -48,7 +53,9 @@ class Task():
             done = self.sim.next_timestep(rotor_speeds) # update the sim pose and velocities
             reward += self.get_reward() 
             pose_all.append((self.sim.pose[2] - 10)/10)
-            pose_all.append(self.sim.v[2])
+            #pose_all.append(self.sim.v[2])
+            pose_all.append((rotor_speeds[0] - self.action_low) / self.action_range * 2 - 1)
+            pose_all.append((self.sim.v[2]) / 3 - 1)
             #pose_all.append((self.sim.pose[2] - 10)/10)
             #pose_all.append(self.sim.pose[:3])
             #pose_all.append(self.sim.pose[5])
@@ -67,6 +74,7 @@ class Task():
         #state = np.concatenate(([self.sim.pose,self.sim.v]) * self.action_repeat) 
         #state = np.concatenate(([self.sim.pose[:3]]) * self.action_repeat) 
         #state = (np.array(([self.sim.pose[2]]) * self.action_repeat) - 10 ) / 10
-        state = np.array(([(self.sim.pose[2] - 10 ) / 10, self.sim.v[2]]) * self.action_repeat)
+        #state = np.array(([(self.sim.pose[2] - 10 ) / 10, self.sim.v[2]]) * self.action_repeat)
+        state = np.array(([(self.sim.pose[2] - 10 ) / 10, 0.,0.]) * self.action_repeat)
 
         return state
