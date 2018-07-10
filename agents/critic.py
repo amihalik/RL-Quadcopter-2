@@ -21,20 +21,29 @@ class Critic:
 
     def build_model(self):
         """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
+        kernel_initializer='glorot_normal'
+        
         # Define input layers
         states = layers.Input(shape=(self.state_size,), name='states')
         actions = layers.Input(shape=(self.action_size,), name='actions')
 
         # Add hidden layer(s) for state pathway
-        net_states = layers.Dense(units=3, activation='relu')(states)
-        #net_states = layers.BatchNormalization()(net_states)
-        net_states = layers.Dense(units=2, activation='relu')(net_states)
+        net_states = layers.Dense(units=16,  kernel_initializer=kernel_initializer)(states)
+        net_states = layers.BatchNormalization()(net_states)
+        net_states = layers.LeakyReLU(1e-2)(net_states)
 
+        net_states = layers.Dense(units=32,  kernel_initializer=kernel_initializer)(net_states)
+        net_states = layers.BatchNormalization()(net_states)
+        net_states = layers.LeakyReLU(1e-2)(net_states)
+        
         # Add hidden layer(s) for action pathway
-        net_actions = layers.Dense(units=3, activation='relu')(actions)
-        #net_actions = layers.BatchNormalization()(net_actions)
-        net_actions = layers.Dense(units=2, activation='relu')(net_actions)
-
+        net_actions = layers.Dense(units=16,  kernel_initializer=kernel_initializer)(actions)
+        net_actions = layers.BatchNormalization()(net_actions)
+        net_actions = layers.LeakyReLU(1e-2)(net_actions)
+        net_actions = layers.Dense(units=32, kernel_initializer=kernel_initializer)(net_actions)
+        net_actions = layers.BatchNormalization()(net_actions)
+        net_actions = layers.LeakyReLU(1e-2)(net_actions)
+        
         # Try different layer sizes, activations, add batch normalization, regularizers, etc.
 
         # Combine state and action pathways
@@ -44,7 +53,7 @@ class Critic:
         # Add more layers to the combined network if needed
 
         # Add final output layer to prduce action values (Q values)
-        Q_values = layers.Dense(units=1, name='q_values')(net)
+        Q_values = layers.Dense(units=1, name='q_values',  kernel_initializer=kernel_initializer)(net)
 
         # Create Keras model
         self.model = models.Model(inputs=[states, actions], outputs=Q_values)

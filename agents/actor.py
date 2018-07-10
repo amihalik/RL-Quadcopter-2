@@ -29,18 +29,23 @@ class Actor:
         # Define input layer (states)
         states = layers.Input(shape=(self.state_size,), name='states')
 
+        kernel_initializer='glorot_normal'
+        
         # Add hidden layers
-        net = layers.Dense(units=3, activation='relu')(states)
-        #net = layers.BatchNormalization()(net)
-        net = layers.Dense(units=2, activation='relu')(net)
-        #net = layers.BatchNormalization()(net)
+        net = layers.Dense(units=16, kernel_initializer=kernel_initializer)(states)
+        net = layers.BatchNormalization()(net)
+        net = layers.LeakyReLU(1e-2)(net)
+        net = layers.Dense(units=32, kernel_initializer=kernel_initializer)(net)
+        net = layers.BatchNormalization()(net)
+        net = layers.LeakyReLU(1e-2)(net)
+
         #net = layers.Dense(units=4, activation='tanh')(net)
         
         # Try different layer sizes, activations, add batch normalization, regularizers, etc.
-
+        
         # Add final output layer with sigmoid activation
         raw_actions = layers.Dense(units=self.action_size, activation='sigmoid',
-            name='raw_actions')(net)
+            name='raw_actions', kernel_initializer=kernel_initializer)(net)
 
         # Scale [0, 1] output for each action dimension to proper range
         actions = layers.Lambda(lambda x: (x * self.action_range) + self.action_low,
